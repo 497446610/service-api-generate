@@ -106,9 +106,11 @@ public class GitUtil {
 			throw new Exception("repository is not exists.");
 		}
 		Git git = Git.open(dest);
-		git.pull();
+		git.pull().call();
 		logger.info("finish pull.");
 	}
+	
+	
 
 	/**
 	 * 获取分支列表

@@ -109,8 +109,8 @@ public class ProjectController {
 			List<String> branchs = GitUtil.branchList(uri);
 			return AjaxResult.success(branchs);
 		} catch (Exception e) {
-			logger.error("删除项目失败", e);
-			return AjaxResult.failed("服务异常，删除项目失败！");
+			logger.error("获取GIT分支失败", e);
+			return AjaxResult.failed("服务异常，获取GIT分支失败！");
 		}
 	}
 

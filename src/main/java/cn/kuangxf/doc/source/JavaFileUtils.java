@@ -30,10 +30,10 @@ import com.alibaba.fastjson.JSONObject;
 public class JavaFileUtils {
 	private final static Logger logger = LoggerFactory.getLogger(JavaFileUtils.class);
 	private final static String JAVAPATHPREFIX;
-	private final static char PATHSEPARATORCHAR = File.separatorChar;
+	public final static String SEPARATOR = Character.toString(File.separatorChar);
 
 	static {
-		JAVAPATHPREFIX = StringUtils.join(new String[] { "src", "main", "java" }, PATHSEPARATORCHAR);
+		JAVAPATHPREFIX = StringUtils.join(new String[] { "src", "main", "java" }, SEPARATOR);
 	}
 
 	/**
@@ -54,14 +54,17 @@ public class JavaFileUtils {
 		if (!file.isDirectory()) {
 			throw new Exception(directory + " is not directory.");
 		}
+		
+		
+		
 		logger.info("------------->{}", JAVAPATHPREFIX);
 		Collection<File> files = FileUtils.listFilesAndDirs(file, new JavaFileFilter(), new JavaDirectoryFilter());
 		Iterator<File> fileIterator = files.iterator();
 
-		int prefixIndex = directory.length() + JAVAPATHPREFIX.length() + 1;
+		/*int prefixIndex = directory.length() + JAVAPATHPREFIX.length() + 1;
 		if (!(directory.endsWith("\\") || directory.endsWith("/"))) {
 			prefixIndex += 1;
-		}
+		}*/
 
 		while (fileIterator.hasNext()) {
 			File javaFile = fileIterator.next();
@@ -71,16 +74,17 @@ public class JavaFileUtils {
 			}
 
 			String filePath = javaFile.getAbsolutePath();
+			int prefixIndex = filePath.indexOf(JAVAPATHPREFIX) + JAVAPATHPREFIX.length() + 1;
 
 			String javaPackagePathName = filePath.substring(prefixIndex);
 			String[] packageSplit = javaPackagePathName.split("\\\\");
 			packageSplit[packageSplit.length - 1] = packageSplit[packageSplit.length - 1].replace(".java", "");
 			String packageName = StringUtils.join(packageSplit, ".");
-			
+
 			JSONObject clsJSONObject = new JSONObject();
 			clsJSONObject.put("className", packageName);
 			clsJSONObject.put("modifyTime", javaFile.lastModified());
-			
+
 			result.add(clsJSONObject);
 
 		}
