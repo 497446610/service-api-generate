@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import cn.kuangxf.doc.bean.JavaGitProjectBean;
 import cn.kuangxf.doc.controller.AjaxResult;
 import cn.kuangxf.doc.dao.domain.JavaGitProject;
-import cn.kuangxf.doc.dao.manager.JavaGitProjectDao;
+import cn.kuangxf.doc.dao.manager.JavaGitProjectMananger;
 import cn.kuangxf.doc.source.GitUtil;
 
 /**
@@ -35,7 +35,7 @@ import cn.kuangxf.doc.source.GitUtil;
 public class ProjectController {
 	private final static Logger logger = LoggerFactory.getLogger(ProjectController.class);
 	@Autowired
-	JavaGitProjectDao javaGitProjectDao;
+	JavaGitProjectMananger javaGitProjectDao;
 
 	/**
 	 * 获取所有项目

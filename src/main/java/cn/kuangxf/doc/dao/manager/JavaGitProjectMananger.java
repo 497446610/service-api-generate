@@ -20,6 +20,6 @@ import cn.kuangxf.doc.dao.domain.JavaGitProject;
  * 
  */
 @Repository
-public interface JavaGitProjectDao extends CrudRepository<JavaGitProject, String> {
+public interface JavaGitProjectMananger extends CrudRepository<JavaGitProject, String> {
 
 }

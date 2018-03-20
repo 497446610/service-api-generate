@@ -77,6 +77,7 @@ public class JavaFileUtils {
 			int prefixIndex = filePath.indexOf(JAVAPATHPREFIX) + JAVAPATHPREFIX.length() + 1;
 
 			String javaPackagePathName = filePath.substring(prefixIndex);
+			String relativePath = filePath.substring(directory.length());
 			String[] packageSplit = javaPackagePathName.split("\\\\");
 			packageSplit[packageSplit.length - 1] = packageSplit[packageSplit.length - 1].replace(".java", "");
 			String packageName = StringUtils.join(packageSplit, ".");
@@ -84,6 +85,7 @@ public class JavaFileUtils {
 			JSONObject clsJSONObject = new JSONObject();
 			clsJSONObject.put("className", packageName);
 			clsJSONObject.put("modifyTime", javaFile.lastModified());
+			clsJSONObject.put("relativePath", relativePath);
 
 			result.add(clsJSONObject);
 

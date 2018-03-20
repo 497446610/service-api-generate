@@ -59,7 +59,7 @@ public class GitUtil {
 		}
 		logger.info("start clone:{},to directory:{}", uri, localPath);
 		CloneCommand clone = Git.cloneRepository().setURI(uri).setDirectory(new File(localPath));
-		clone.call();
+		clone.call().close();
 		logger.info("finish clone.");
 	}
 
@@ -107,6 +107,7 @@ public class GitUtil {
 		}
 		Git git = Git.open(dest);
 		git.pull().call();
+		git.close();
 		logger.info("finish pull.");
 	}
 	

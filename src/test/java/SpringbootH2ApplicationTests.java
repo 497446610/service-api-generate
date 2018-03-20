@@ -6,7 +6,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import cn.kuangxf.doc.App;
 import cn.kuangxf.doc.dao.domain.JavaGitProject;
-import cn.kuangxf.doc.dao.manager.JavaGitProjectDao;
+import cn.kuangxf.doc.dao.manager.JavaGitProjectMananger;
 
 /*
  * @(#)SpringbootH2ApplicationTests.java        1.0 2018年3月19日
@@ -27,7 +27,7 @@ import cn.kuangxf.doc.dao.manager.JavaGitProjectDao;
 public class SpringbootH2ApplicationTests {
 	
 	@Autowired
-	JavaGitProjectDao javaGitProjectDao;
+	JavaGitProjectMananger javaGitProjectDao;
 	
 	@Test
 	public void testInsert() {
