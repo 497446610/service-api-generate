@@ -30,11 +30,11 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.AnnotationDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 
 /**
  * 接口文档.
@@ -107,7 +107,7 @@ public class ApiDocUtil {
 		if (!apiFile.exists()) {
 			apiFile.delete();
 		}
-		
+
 		try {
 			FileUtils.forceMkdirParent(apiFile);
 		} catch (IOException e) {
@@ -179,7 +179,7 @@ public class ApiDocUtil {
 			return null;
 		}
 		Node node = childNodes.get(0);
-		if (!(node instanceof ClassOrInterfaceDeclaration ) ) {
+		if (!(node instanceof ClassOrInterfaceDeclaration)) {
 			return null;
 		}
 		ClassOrInterfaceDeclaration clsDecl = (ClassOrInterfaceDeclaration) node;
@@ -225,6 +225,16 @@ public class ApiDocUtil {
 				// 解析方法
 				MethodDeclaration methodDecl = (MethodDeclaration) childNode;
 
+				// 方法是否过期
+				boolean deprecated = false;
+				NodeList<AnnotationExpr> annotationList = methodDecl.getAnnotations();
+				for (AnnotationExpr annotationExpr : annotationList) {
+					String annoName = annotationExpr.getName().asString();
+					if (annoName.indexOf("Deprecated") >= 0) {
+						deprecated = true;
+					}
+				}
+
 				String methodName = methodDecl.getDeclarationAsString();
 				String methodComment = "";
 				if (methodDecl.getComment().isPresent()) {
@@ -236,9 +246,10 @@ public class ApiDocUtil {
 				methodComment = cutComment(methodComment);
 				String returnType = methodDecl.getType().asString();
 				JSONObject methodJson = new JSONObject();
-				methodJson.put("name", methodName);
-				methodJson.put("rtype", returnType);
-				methodJson.put("comment", methodComment);
+				methodJson.put("name", methodName); // 方法名称
+				methodJson.put("rtype", returnType);// 方法返回类型
+				methodJson.put("comment", methodComment);// 方法注释
+				methodJson.put("deprecated", deprecated);// 是否过期
 				method.add(methodJson);
 
 				poTypeSet.add(returnType);
@@ -342,6 +353,7 @@ public class ApiDocUtil {
 		case "Object":
 		case "List":
 		case "Set":
+		case "Collection":
 		case "Map":
 		case "ArrayList":
 		case "HashMap":
@@ -378,7 +390,7 @@ public class ApiDocUtil {
 
 		// JSONObject api =
 		// ApiDocUtil.parseApiFromFile("D:\\JavaGitProjectBean.java");
-		JSONObject api = ApiDocUtil.parseApiFromJavaFile("D:\\IOrderMainService.java");
+		//JSONObject api = ApiDocUtil.parseApiFromJavaFile("D:\\IOrderMainService.java");
 
 	}
 }
