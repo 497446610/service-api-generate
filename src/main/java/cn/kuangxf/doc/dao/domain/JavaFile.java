@@ -53,6 +53,11 @@ public class JavaFile {
 	 */
 	private String className;
 
+	/**
+	 * 版本号
+	 */
+	private Long version;
+
 	public String getFileId() {
 		return fileId;
 	}
@@ -100,4 +105,14 @@ public class JavaFile {
 	public void setBranch(String branch) {
 		this.branch = branch;
 	}
+
+	public Long getVersion() {
+		return version;
+	}
+
+	public void setVersion(Long version) {
+		this.version = version;
+	}
+	
+	
 }

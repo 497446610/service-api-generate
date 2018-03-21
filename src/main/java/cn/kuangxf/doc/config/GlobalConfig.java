@@ -56,6 +56,25 @@ public class GlobalConfig {
 	}
 
 	/**
+	 * 取得java 文件的全路径
+	 * 
+	 * @param code
+	 * @param branch
+	 * @param relativePath
+	 * @return
+	 */
+	public static String getJavaSourcePath(String code, String branch, String relativePath) {
+		StringBuilder sourceDir = new StringBuilder(getSourceDir(code, branch));
+
+		if (!relativePath.startsWith("\\")) {
+			sourceDir.append(JavaFileUtils.SEPARATOR);
+		}
+		sourceDir.append(relativePath);
+
+		return sourceDir.toString();
+	}
+
+	/**
 	 * 获得类解析的json数据存放路径
 	 * 
 	 * @param code
