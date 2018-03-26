@@ -110,8 +110,6 @@ public class GitUtil {
 		git.close();
 		logger.info("finish pull.");
 	}
-	
-	
 
 	/**
 	 * 获取分支列表
@@ -130,6 +128,9 @@ public class GitUtil {
 		List<String> result = new ArrayList<>();
 		int index = "refs/heads/".length();
 		for (Ref ref : refs) {
+			if(ref.getName().indexOf("refs/tags") >= 0){
+				continue;
+			}
 			result.add(ref.getName().substring(index));
 		}
 		return result;
@@ -140,7 +141,7 @@ public class GitUtil {
 		// GitUtil.cloneDelFirst("https://github.com/497446610/zk-config.git",
 		// "d:\\test", "master");
 
-		GitUtil.branchList("https://github.com/497446610/java-example-group.git");
+		GitUtil.branchList("http://git.panda.com/javas/java-panda-crm-admin-dubbo.git");
 
 	}
 
