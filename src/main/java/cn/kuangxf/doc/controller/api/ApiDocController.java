@@ -96,6 +96,14 @@ public class ApiDocController {
 
 	}
 
+	/**
+	 * 解析类的熟悉
+	 * 
+	 * @param code
+	 * @param branch
+	 * @param className
+	 * @return
+	 */
 	@RequestMapping("doc4Model")
 	public AjaxResult doc4Model(String code, String branch, String className) {
 
@@ -137,6 +145,13 @@ public class ApiDocController {
 		}
 	}
 
+	/**
+	 * 解析模型类
+	 * 
+	 * @param javaFile
+	 * @param allList
+	 * @return
+	 */
 	private JSONArray parseJSONByJavaModelFile(JavaFile javaFile, List<JavaFile> allList) {
 		// java文件相对路径
 		String javaRelativePath = javaFile.getRelativePath();
