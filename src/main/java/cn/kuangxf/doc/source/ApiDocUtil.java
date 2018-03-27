@@ -35,9 +35,11 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 /**
- * 接口文档.
+ * 完整解析Class工具类.<br>
+ * 
  *
  * @version 1.0 2018年3月16日
  * @author kuangxf
@@ -139,7 +141,40 @@ public class ApiDocUtil {
 	 * 
 	 * @param javaFilePath
 	 *            java文件全路径
-	 * @return
+	 * @return class json 格式,样列：<br/>
+	 {
+	"code": "zk-config",                              //项目代码
+ 	"brance": "main",                                 //git分支
+ 	"package": "com.panda.generic.ware.domain.to",    //包名
+ 	"modifyTime": 1520490330903,                      //文件修改时间戳
+ 	"propertys": [{                                   //class属性数组
+ 		"poTypes": [{
+ 			"simpleName": "WareSeachPo",              //类名
+ 			"fullName": "com.panda.generic.ware.domain.po.WareSeachPo"//类包名
+ 		}],
+ 		"name": "wareSeachs",                         //属性名称
+ 		"comment": "",                                //注释
+ 		"type": "List<WareSeachPo>"                   //属性类型
+ 	}, {......}],
+ 	
+ 	"methods": [{									  //class方法数组
+ 		"rtype": "List<WareSeachPo>",                 //方法返回类型
+ 		"poTypes": [{                                 //方法中涉及到类的数组
+ 			"simpleName": "WareSeachPo",              //类名
+ 			"fullName": "com.panda.generic.ware.domain.po.WareSeachPo" //类包名
+ 		}],
+ 		"deprecated": false,                          //是否过期
+ 		"name": "public List<WareSeachPo> getWareSeachs()",            //方法
+ 		"comment": "",                                //方法注释
+ 		"params": []                                  //参数列表
+ 	}, {......}],
+ 	"fullName": "com.panda.generic.ware.domain.to.WareSeachTo",        //类全名
+ 	"comment": "",
+ 	"extendeds": [                                    //继承的类数组
+ 		"com.panda.generic.ware.domain.po.WareSeachPo"                 //类全名
+ 	],
+ 	"class": "WareSeachTo"                           //类名
+ }
 	 */
 	public static JSONObject parseApiFromJavaFile(String javaFilePath) {
 
@@ -193,94 +228,118 @@ public class ApiDocUtil {
 			comment = clsDecl.getComment().get().getContent().toString();
 		}
 
+		// 解析继承的父类
+		// 继承的类
+		JSONArray extendeds = new JSONArray();
+		NodeList<ClassOrInterfaceType> extendedNodeList = clsDecl.getExtendedTypes();
+		for (ClassOrInterfaceType classOrInterfaceType : extendedNodeList) {
+			String parentType = classOrInterfaceType.getNameAsString();
+			String fullTypeName = importMap.get(parentType);
+			if (StringUtils.isEmpty(fullTypeName)) {
+				extendeds.add(parentType);
+			} else {
+				extendeds.add(fullTypeName);
+			}
+		}
+
 		comment = cutComment(comment);
 		clsJson.put("comment", comment); // 类备注
 
 		// 类的属性
 		JSONArray property = new JSONArray();
-
 		// 类的方法
 		JSONArray method = new JSONArray();
-
 		List<Node> clsChilds = clsDecl.getChildNodes();
 		for (Node childNode : clsChilds) {
-			if (childNode instanceof FieldDeclaration) {
-				// 解析属性
-				FieldDeclaration fieldDecl = (FieldDeclaration) childNode;
-				String fieldComment = "";
-				if (fieldDecl.getComment().isPresent()) {
-					fieldComment = fieldDecl.getComment().get().getContent().toString();
-				}
-
-				String varType = fieldDecl.getVariables().get(0).getType().asString();
-				String varName = fieldDecl.getVariables().get(0).getNameAsString();
-				fieldComment = cutComment(fieldComment);
-
-				JSONObject varJson = new JSONObject();
-				varJson.put("name", varName);
-				varJson.put("type", varType);
-				varJson.put("comment", fieldComment);
-				property.add(varJson);
-			} else if (childNode instanceof MethodDeclaration) {
-				// 解析方法
-				MethodDeclaration methodDecl = (MethodDeclaration) childNode;
-
-				// 方法是否过期
-				boolean deprecated = false;
-				NodeList<AnnotationExpr> annotationList = methodDecl.getAnnotations();
-				for (AnnotationExpr annotationExpr : annotationList) {
-					String annoName = annotationExpr.getName().asString();
-					if (annoName.indexOf("Deprecated") >= 0) {
-						deprecated = true;
-					}
-				}
-
-				String methodName = methodDecl.getDeclarationAsString();
-				String methodComment = "";
-				if (methodDecl.getComment().isPresent()) {
-					methodComment = methodDecl.getComment().get().getContent().toString();
-				}
-
-				Set<String> poTypeSet = new HashSet<>();
-
-				methodComment = cutComment(methodComment);
-				String returnType = methodDecl.getType().asString();
-				JSONObject methodJson = new JSONObject();
-				methodJson.put("name", methodName); // 方法名称
-				methodJson.put("rtype", returnType);// 方法返回类型
-				methodJson.put("comment", methodComment);// 方法注释
-				methodJson.put("deprecated", deprecated);// 是否过期
-				method.add(methodJson);
-
-				poTypeSet.add(returnType);
-
-				// 解析方法参数
-				NodeList<Parameter> paramList = methodDecl.getParameters();
-				JSONArray paramsJson = new JSONArray();
-
-				for (Parameter param : paramList) {
-					JSONObject paramJson = new JSONObject();
-					paramJson.put("name", param.getName().asString());
-					paramJson.put("type", param.getType().asString());
-					paramsJson.add(paramJson);
-
-					poTypeSet.add(param.getType().asString());
-				}
-				methodJson.put("params", paramsJson);
-
-				// 解析方法涉及到的所有PO类（包括返回，参数，泛型）
-				methodJson.put("poTypes", parsePOType(poTypeSet, importMap));
-
+			if (childNode instanceof FieldDeclaration) {// 解析属性
+				parseField(property, (FieldDeclaration) childNode, importMap);
+			} else if (childNode instanceof MethodDeclaration) {// 解析方法
+				parseMethod(method, (MethodDeclaration) childNode, importMap);
 			}
 
 		}
 
 		clsJson.put("propertys", property);
 		clsJson.put("methods", method);
+		clsJson.put("extendeds", extendeds);
 
 		logger.info(clsJson.toString());
 		return clsJson;
 
+	}
+
+	private static void parseField(JSONArray properties, FieldDeclaration childNode, Map<String, String> importMap) {
+		// 解析属性
+		FieldDeclaration fieldDecl = childNode;
+		String fieldComment = "";
+		if (fieldDecl.getComment().isPresent()) {
+			fieldComment = fieldDecl.getComment().get().getContent().toString();
+		}
+
+		String varType = fieldDecl.getVariables().get(0).getType().asString();
+		String varName = fieldDecl.getVariables().get(0).getNameAsString();
+		fieldComment = cutComment(fieldComment);
+
+		JSONObject varJson = new JSONObject();
+		varJson.put("name", varName);
+		varJson.put("type", varType);
+
+		varJson.put("comment", fieldComment);
+
+		// 解析属性中涉及到的所有class
+		varJson.put("poTypes", parsePOType(varType, importMap));
+		properties.add(varJson);
+	}
+
+	private static void parseMethod(JSONArray methods, MethodDeclaration childNode, Map<String, String> importMap) {
+		// 解析方法
+		MethodDeclaration methodDecl = (MethodDeclaration) childNode;
+
+		// 方法是否过期
+		boolean deprecated = false;
+		NodeList<AnnotationExpr> annotationList = methodDecl.getAnnotations();
+		for (AnnotationExpr annotationExpr : annotationList) {
+			String annoName = annotationExpr.getName().asString();
+			if (annoName.indexOf("Deprecated") >= 0) {
+				deprecated = true;
+			}
+		}
+
+		String methodName = methodDecl.getDeclarationAsString();
+		String methodComment = "";
+		if (methodDecl.getComment().isPresent()) {
+			methodComment = methodDecl.getComment().get().getContent().toString();
+		}
+
+		Set<String> poTypeSet = new HashSet<>();
+
+		methodComment = cutComment(methodComment);
+		String returnType = methodDecl.getType().asString();
+		JSONObject methodJson = new JSONObject();
+		methodJson.put("name", methodName); // 方法名称
+		methodJson.put("rtype", returnType);// 方法返回类型
+		methodJson.put("comment", methodComment);// 方法注释
+		methodJson.put("deprecated", deprecated);// 是否过期
+		methods.add(methodJson);
+
+		poTypeSet.add(returnType);
+
+		// 解析方法参数
+		NodeList<Parameter> paramList = methodDecl.getParameters();
+		JSONArray paramsJson = new JSONArray();
+
+		for (Parameter param : paramList) {
+			JSONObject paramJson = new JSONObject();
+			paramJson.put("name", param.getName().asString());
+			paramJson.put("type", param.getType().asString());
+			paramsJson.add(paramJson);
+
+			poTypeSet.add(param.getType().asString());
+		}
+		methodJson.put("params", paramsJson);
+
+		// 解析方法涉及到的所有PO类（包括返回，参数，泛型）
+		methodJson.put("poTypes", parsePOType(poTypeSet, importMap));
 	}
 
 	/**
@@ -295,34 +354,61 @@ public class ApiDocUtil {
 
 		Set<String> allTypes = new HashSet<>();
 		for (String type : poTypeSet) {// 解析出所有的类型（分解出泛型中的类型）
-			if (type.indexOf("<") > 0) { // 处理泛型
-				type = type.replace("<", ",");
-				type = type.replace(">", ",");
-
-				String[] generics = type.split(",");
-				for (String genericType : generics) {
-					if (StringUtils.isEmpty(genericType)) {
-						continue;
-					}
-					if (isPrimitive(genericType)) {
-						continue;
-					}
-					allTypes.add(genericType);
-				}
-			} else {
-				if (isPrimitive(type)) {
-					continue;
-				}
-				allTypes.add(type);
-			}
+			allTypes.addAll(parseGenericType(type));
 		}
-		for (String type : allTypes) {
-			String fullTypeName = importMap.get(type);
+		for (String simpleType : allTypes) {
+			String fullTypeName = importMap.get(simpleType);
 			if (StringUtils.isEmpty(fullTypeName)) {
 				continue;
 			}
 			JSONObject poJson = new JSONObject();
-			poJson.put("simpleName", type);
+			poJson.put("simpleName", simpleType);
+			poJson.put("fullName", fullTypeName);
+			poTypes.add(poJson);
+		}
+		return poTypes;
+	}
+
+	/**
+	 * 解析出所有泛型中的class
+	 * 
+	 * @param type
+	 * @return
+	 */
+	private static Set<String> parseGenericType(String type) {
+		Set<String> allTypes = new HashSet<>();
+		if (type.indexOf("<") > 0) { // 处理泛型
+			type = type.replace("<", ",");
+			type = type.replace(">", ",");
+			String[] generics = type.split(",");
+			for (String genericType : generics) {
+				if (StringUtils.isEmpty(genericType)) {
+					continue;
+				}
+				if (isPrimitive(genericType)) {
+					continue;
+				}
+				allTypes.add(genericType);
+			}
+		} else {
+			if (!isPrimitive(type)) {
+				allTypes.add(type);
+			}
+		}
+		return allTypes;
+
+	}
+
+	private static JSONArray parsePOType(String type, Map<String, String> importMap) {
+		Set<String> allTypes = parseGenericType(type);
+		JSONArray poTypes = new JSONArray();
+		for (String simpleType : allTypes) {
+			String fullTypeName = importMap.get(simpleType);
+			if (StringUtils.isEmpty(fullTypeName)) {
+				continue;
+			}
+			JSONObject poJson = new JSONObject();
+			poJson.put("simpleName", simpleType);
 			poJson.put("fullName", fullTypeName);
 			poTypes.add(poJson);
 		}
@@ -390,7 +476,8 @@ public class ApiDocUtil {
 
 		// JSONObject api =
 		// ApiDocUtil.parseApiFromFile("D:\\JavaGitProjectBean.java");
-		//JSONObject api = ApiDocUtil.parseApiFromJavaFile("D:\\IOrderMainService.java");
+		// JSONObject api =
+		// ApiDocUtil.parseApiFromJavaFile("D:\\IOrderMainService.java");
 
 	}
 }
