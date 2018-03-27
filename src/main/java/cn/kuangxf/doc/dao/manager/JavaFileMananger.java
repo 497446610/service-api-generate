@@ -30,6 +30,8 @@ public interface JavaFileMananger extends CrudRepository<JavaFile, String> {
 
 	@Query("select u from JavaFile u where u.code = ?1 and u.branch=?2 and u.className=?3")
 	List<JavaFile> findByClassName(String code, String branch, String className);
+	
+	
 
 	@Modifying
 	@Transactional

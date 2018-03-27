@@ -29,6 +29,7 @@ import cn.kuangxf.doc.dao.manager.JavaGitProjectMananger;
 import cn.kuangxf.doc.source.ApiDocUtil;
 import cn.kuangxf.doc.source.GitUtil;
 import cn.kuangxf.doc.source.JavaFileUtils;
+import cn.kuangxf.doc.source.PODocUtil;
 
 /**
  * api doc 接口.
@@ -74,28 +75,44 @@ public class ApiDocController {
 	/**
 	 * 获取java文件的api解析数据
 	 * 
-	 * @param fileId
-	 *            文件ID
-	 * @return
 	 */
 	@RequestMapping("docByName")
-	public AjaxResult doc(String code,String branch,String className) {
+	public AjaxResult docByName(String code, String branch, String className) {
 
 		List<JavaFile> list = javaFileManager.findByClassName(code, branch, className);
 
 		if (list == null || list.isEmpty()) {
 			return AjaxResult.failed("Java文件不存在，可以尝试先刷新一下代码哟...");
 		}
-		
+
 		JavaFile javaFile = list.get(0);
-		
+
 		JSONObject jsonObject = parseJSONByJavaFile(javaFile);
 		if (jsonObject == null) {
 			return AjaxResult.failed("解析文件错误，不能识别的java文件...");
-		}else{
+		} else {
 			return AjaxResult.success(jsonObject);
 		}
-		
+
+	}
+
+	@RequestMapping("doc4Model")
+	public AjaxResult doc4Model(String code, String branch, String className) {
+
+		List<JavaFile> list = javaFileManager.findByClassName(code, branch, className);
+		List<JavaFile> allList = javaFileManager.findByCodeAndBranch(code, branch);
+		if (list == null || list.isEmpty()) {
+			return AjaxResult.failed("Java文件不存在，可以尝试先刷新一下代码哟...");
+		}
+
+		JavaFile javaFile = list.get(0);
+
+		JSONArray jsonArray = parseJSONByJavaModelFile(javaFile, allList);
+		if (jsonArray == null) {
+			return AjaxResult.failed("解析文件错误，不能识别的java文件...");
+		} else {
+			return AjaxResult.success(jsonArray);
+		}
 
 	}
 
@@ -110,13 +127,24 @@ public class ApiDocController {
 			// java文件相对路径
 			String javaRelativePath = javaFile.getRelativePath();
 			// java文件绝对路径
-			String javaFullPath = GlobalConfig.getJavaSourcePath(javaFile.getCode(), javaFile.getBranch(), javaRelativePath);
+			String javaFullPath = GlobalConfig.getJavaSourcePath(javaFile.getCode(), javaFile.getBranch(),
+					javaRelativePath);
 			JSONObject jsonObject = ApiDocUtil.parseApiFromJavaFile(javaFullPath);
 			jsonObject.put("code", javaFile.getCode());
 			jsonObject.put("brance", javaFile.getBranch());
 			ApiDocUtil.writeApi2File(jsonObject, apiFilePath);
 			return jsonObject;
 		}
+	}
+
+	private JSONArray parseJSONByJavaModelFile(JavaFile javaFile, List<JavaFile> allList) {
+		// java文件相对路径
+		String javaRelativePath = javaFile.getRelativePath();
+		// java文件绝对路径
+		String javaFullPath = GlobalConfig.getJavaSourcePath(javaFile.getCode(), javaFile.getBranch(),
+				javaRelativePath);
+		JSONArray jsonArray = PODocUtil.parseApiFromJavaFile(javaFullPath, allList);
+		return jsonArray;
 	}
 
 	/**
