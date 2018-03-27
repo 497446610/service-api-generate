@@ -215,6 +215,10 @@ public class PODocUtil {
 
 		String varType = fieldDecl.getVariables().get(0).getType().asString();
 		String varName = fieldDecl.getVariables().get(0).getNameAsString();
+
+		if (varName.equals("serialVersionUID")) {// 忽略此字段
+			return;
+		}
 		fieldComment = cutComment(fieldComment);
 
 		JSONObject propertyInfo = new JSONObject();
