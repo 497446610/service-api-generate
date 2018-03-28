@@ -59,10 +59,23 @@
                     allMethods = result.data.methods;
                     for(var i = 0 ;i < methods.length;i++){
                         var rtype = methods[i].rtype;
-                        var r = rtype.split("<")[1].split(">")[0];
+                        var r = "";
+                        var rlength = rtype.split("<");
+                        if(rlength>0){
+                            var rone = rlength[1].split(">");
+                            if(rone.length>0){
+                                    r = rone[0];
+                            }
+                        }
+//                        var r = rtype.split("<")[1].split(">")[0];
                         var comment = methods[i].comment;
                         var commentShow = comment.substring(0,4);
-                        methosList.innerHTML+= "<tr><td>"+methods[i].name+"</td><td title ='"+comment+"'>"+commentShow+"</td><td>"+methods[i].deprecated+"</td><td><a href='javascript:;' onclick='getParams("+i+")'>点击查看参数</a></td><td><a href='javascript:;' onclick='getPo("+i+")'>点击查看po详情</a></td><td>"+rtype+"&lt;"+r+"&gt;</td></tr>"
+                        if(r){
+                            methosList.innerHTML+= "<tr><td>"+methods[i].name+"</td><td title ='"+comment+"'>"+commentShow+"</td><td>"+methods[i].deprecated+"</td><td><a href='javascript:;' onclick='getParams("+i+")'>点击查看参数</a></td><td><a href='javascript:;' onclick='getPo("+i+")'>点击查看po详情</a></td><td>"+rtype+"&lt;"+r+"&gt;</td></tr>";
+                        }else{
+                            methosList.innerHTML+= "<tr><td>"+methods[i].name+"</td><td title ='"+comment+"'>"+commentShow+"</td><td>"+methods[i].deprecated+"</td><td><a href='javascript:;' onclick='getParams("+i+")'>点击查看参数</a></td><td><a href='javascript:;' onclick='getPo("+i+")'>点击查看po详情</a></td><td>"+rtype+"</td></tr>";
+                        }
+
                     }
                 }
             });

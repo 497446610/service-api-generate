@@ -25,8 +25,14 @@ import cn.kuangxf.doc.dao.domain.JavaFile;
  * 
  */
 public interface JavaFileMananger extends CrudRepository<JavaFile, String> {
-	@Query("select u from JavaFile u where u.code = ?1 and u.branch=?2")
+	@Query("select u from JavaFile u where u.code = ?1 and u.branch=?2 order by u.packageName asc, u.className asc")
 	List<JavaFile> findByCodeAndBranch(String code, String branch);
+	
+	@Query("select u from JavaFile u where u.code = ?1 and u.branch=?2 and u.packageName=?3 order by u.className asc")
+	List<JavaFile> findByCodeAndBranch(String code, String branch,String packageName);
+	
+	@Query("select distinct u.packageName from JavaFile u where u.code = ?1 and u.branch=?2 order by u.packageName asc")
+	List<String> findPackageName(String code, String branch);
 
 	@Query("select u from JavaFile u where u.code = ?1 and u.branch=?2 and u.className=?3")
 	List<JavaFile> findByClassName(String code, String branch, String className);

@@ -212,6 +212,76 @@ public class ApiDocController {
 	}
 
 	/**
+	 * 获取项目某个分支的所有的class
+	 * 
+	 * @param code
+	 *            项目代码
+	 * @param branch
+	 *            分支
+	 * @param packageName
+	 *            包名
+	 * @return
+	 */
+	@RequestMapping("packageClassList")
+	public AjaxResult packageClassList(String code, String branch, String packageName) {
+		String sourceDirName = GlobalConfig.getSourceDir(code, branch);
+		File sourceDir = new File(sourceDirName);
+		if (!sourceDir.exists()) {// 本地仓库不存在,需要从远程仓库克隆源代码到本地
+			cloneSource(code, sourceDirName, branch);
+			return AjaxResult.failed("服务器后台正在克隆源代码，请稍后再试...");
+		}
+
+		try {
+			List<JavaFile> result = javaFileManager.findByCodeAndBranch(code, branch, packageName);
+
+			if (result == null || result.isEmpty()) {
+				refresh(code, branch);
+				return AjaxResult.failed("服务器后台正在分析源代码，请稍后再试...");
+			}
+
+			return AjaxResult.success(result);
+		} catch (Exception e) {
+			logger.error("query java file error", e);
+			return AjaxResult.failed("服务器异常，查询数据失败");
+		}
+
+	}
+
+	/**
+	 * 包列表
+	 * 
+	 * @param code
+	 *            项目代码
+	 * @param branch
+	 *            分支
+	 * @return
+	 */
+	@RequestMapping("packageList")
+	public AjaxResult packageList(String code, String branch) {
+		String sourceDirName = GlobalConfig.getSourceDir(code, branch);
+		File sourceDir = new File(sourceDirName);
+		if (!sourceDir.exists()) {// 本地仓库不存在,需要从远程仓库克隆源代码到本地
+			cloneSource(code, sourceDirName, branch);
+			return AjaxResult.failed("服务器后台正在克隆源代码，请稍后再试...");
+		}
+
+		try {
+			List<String> result = javaFileManager.findPackageName(code, branch);
+
+			if (result == null || result.isEmpty()) {
+				refresh(code, branch);
+				return AjaxResult.failed("服务器后台正在分析源代码，请稍后再试...");
+			}
+
+			return AjaxResult.success(result);
+		} catch (Exception e) {
+			logger.error("query java file error", e);
+			return AjaxResult.failed("服务器异常，查询数据失败");
+		}
+
+	}
+
+	/**
 	 * 刷新代码
 	 * 
 	 * @param code
@@ -296,6 +366,8 @@ public class ApiDocController {
 			javaFile.setClassName(jsonObject.getString("className"));
 			javaFile.setRelativePath(jsonObject.getString("relativePath"));
 			javaFile.setModifyTime(jsonObject.getLong("modifyTime"));
+			javaFile.setPackageName(jsonObject.getString("packageName"));
+			javaFile.setSimpleName(jsonObject.getString("simpleName"));
 			javaFile.setCode(code);
 			javaFile.setBranch(branch);
 			javaFile.setVersion(version);

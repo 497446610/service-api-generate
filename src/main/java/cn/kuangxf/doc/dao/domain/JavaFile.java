@@ -49,9 +49,19 @@ public class JavaFile {
 	private String relativePath;
 
 	/**
-	 * 类名
+	 * 类名(包名+类名)
 	 */
 	private String className;
+	
+	/**
+	 * 类名
+	 */
+	private String simpleName;
+	
+	/**
+	 * 包名
+	 */
+	private String packageName;
 
 	/**
 	 * 版本号
@@ -113,6 +123,24 @@ public class JavaFile {
 	public void setVersion(Long version) {
 		this.version = version;
 	}
+
+	public String getPackageName() {
+		return packageName;
+	}
+
+	public void setPackageName(String packageName) {
+		this.packageName = packageName;
+	}
+
+	public String getSimpleName() {
+		return simpleName;
+	}
+
+	public void setSimpleName(String simpleName) {
+		this.simpleName = simpleName;
+	}
+	
+	
 	
 	
 }

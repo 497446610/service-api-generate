@@ -54,17 +54,10 @@ public class JavaFileUtils {
 		if (!file.isDirectory()) {
 			throw new Exception(directory + " is not directory.");
 		}
-		
-		
-		
+
 		logger.info("------------->{}", JAVAPATHPREFIX);
 		Collection<File> files = FileUtils.listFilesAndDirs(file, new JavaFileFilter(), new JavaDirectoryFilter());
 		Iterator<File> fileIterator = files.iterator();
-
-		/*int prefixIndex = directory.length() + JAVAPATHPREFIX.length() + 1;
-		if (!(directory.endsWith("\\") || directory.endsWith("/"))) {
-			prefixIndex += 1;
-		}*/
 
 		while (fileIterator.hasNext()) {
 			File javaFile = fileIterator.next();
@@ -80,10 +73,20 @@ public class JavaFileUtils {
 			String relativePath = filePath.substring(directory.length());
 			String[] packageSplit = javaPackagePathName.split("\\\\");
 			packageSplit[packageSplit.length - 1] = packageSplit[packageSplit.length - 1].replace(".java", "");
-			String packageName = StringUtils.join(packageSplit, ".");
+			String className = StringUtils.join(packageSplit, "."); // 类名
+
+			int index = className.lastIndexOf(".");
+			String packageName = ""; // 包名
+			String simpleName = className;
+			if (index > 0) {
+				packageName = className.substring(0, index);
+				simpleName = className.substring(index+1);
+			}
 
 			JSONObject clsJSONObject = new JSONObject();
-			clsJSONObject.put("className", packageName);
+			clsJSONObject.put("packageName", packageName);//
+			clsJSONObject.put("className", className);
+			clsJSONObject.put("simpleName", simpleName);
 			clsJSONObject.put("modifyTime", javaFile.lastModified());
 			clsJSONObject.put("relativePath", relativePath);
 
