@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+    <style type="text/css">
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .methosList{
+            margin: 0 auto;
+            border-spacing: 10px;
+        }
+        .tabledDiv{
+            background-color: beige;
+        }
+        .paramsDiv{
+            background-color: orange;
+            position: absolute;
+            top: 20px;
+            width: 50%;
+            margin-left: 25%;
+            min-height: 300px;
+            display: none;
+        }
+        #paramsTable{
+            margin: 0 auto;
+        }
+
+        pre { padding: 5px; margin: 5px;
+            margin-left: 20%;
+            font-size: 1.5em;
+        }
+       .string { color: green; }        /*字符串的样式*/
+       .number { color: darkorange; }    /*数字的样式*/
+       .boolean { color: blue; }        /*布尔型数据的样式*/
+       .null { color: magenta; }        /*null值的样式*/
+       .key { color: red; }            /*key值的样式*/
+    </style>
+		<script src="static/js/jquery.js"></script>
+    <script>
+        var url = location.href;
+        var params = url.split("?")[1];
+        var par = params.split("&");
+        var className = par[0].split("=")[1];
+        var code = par[1].split("=")[1];
+        var branch = par[2].split("=")[1];
+        var allMethods;
+        window.onload = function () {
+            $.ajax({
+                dataType : "JSON",
+                type : "GET", //提交方式
+                url : "/api/docByName",//路径
+                data : {code:code,branch:branch,className:className},
+                success : function(result) {
+                    var methosList = document.getElementById("methosList");
+                    var methods = result.data.methods;
+                    allMethods = result.data.methods;
+                    for(var i = 0 ;i < methods.length;i++){
+                        var rtype = methods[i].rtype;
+                        var r = rtype.split("<")[1].split(">")[0];
+                        var comment = methods[i].comment;
+                        var commentShow = comment.substring(0,4);
+                        methosList.innerHTML+= "<tr><td>"+methods[i].name+"</td><td title ='"+comment+"'>"+commentShow+"</td><td>"+methods[i].deprecated+"</td><td><a href='javascript:;' onclick='getParams("+i+")'>点击查看参数</a></td><td><a href='javascript:;' onclick='getPo("+i+")'>点击查看po详情</a></td><td>"+rtype+"&lt;"+r+"&gt;</td></tr>"
+                    }
+                }
+            });
+        }
+        function getParams(index) {
+            var paramsDiv = document.getElementById("paramsDiv");
+            paramsDiv.style.display = "block";
+            var paramArray = allMethods[index].params;
+            var paramTabel = document.getElementById("paramsTable");
+            paramTabel.innerHTML=" <tr><th>参数名称</th><th>参数类型</th></tr>";
+            for(var i = 0 ;i<paramArray.length;i++){
+                paramTabel.innerHTML+="<tr><td>"+paramArray[i].name+"</td><td>"+paramArray[i].type+"</td></tr>";
+            }
+
+        }
+        function  getPo(index) {
+            var paramsDiv = document.getElementById("paramsDiv");
+            paramsDiv.style.display = "block";
+            var poarray = allMethods[index].poTypes;
+            var paramTabel = document.getElementById("paramsTable");
+            paramTabel.innerHTML=" <tr><th>简单类名</th><th>全类名</th></tr>";
+            for(var i = 0 ;i<poarray.length;i++){
+                var simpleName = poarray[i].simpleName;
+                var fullName = poarray[i].fullName;
+                paramTabel.innerHTML+="<tr><td>"+simpleName+"</td><td><a href='javascript:;' onclick=\"getPoDoc('"+fullName+"')\">"+fullName+"</a></td></tr>";
+            }
+        }
+        
+        function getPoDoc(className) {
+            $.ajax({
+                dataType : "JSON",
+                type : "GET", //提交方式
+                url : "/api/doc4Model",//路径
+                data : {code:code,branch:branch,className:className},
+                success : function(result) {
+                	var data = result.data;
+                	var jsonPre = document.getElementById("jsonPre");
+                    var ja = syntaxHighlight(data);
+                    jsonPre.innerHTML=ja;
+                }
+            });
+        }
+        function syntaxHighlight(json) {
+              if (typeof json != 'string') {
+                      json = JSON.stringify(json, undefined, 2);
+                   }
+               json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                     return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+                      function(match) {
+                         var cls = 'number';
+                       if (/^"/.test(match)) {
+                                if (/:$/.test(match)) {
+                                         cls = 'key';
+                                      } else {
+                                         cls = 'string';
+                                      }
+                             } else if (/true|false/.test(match)) {
+                                 cls = 'boolean';
+                                } else if (/null/.test(match)) {
+                                   cls = 'null';
+                                }
+                          return '<span class="' + cls + '">' + match + '</span>';
+                        }
+                );
+             }
+    </script>
+</head>
+	<body>
+        <div class="tabledDiv">
+            <table class="methosList" id="methosList">
+                <tr><th>方法</th>
+                    <th>方法注释</th>
+                    <th>是否废弃</th>
+                    <th>参数查看</th>
+                    <th>po查看</th>
+                    <th>返回类型</th>
+                </tr>
+            </table>
+        </div>
+
+    <div class="paramsDiv" id="paramsDiv">
+        <table cellSpacing="30px" id="paramsTable">
+        </table>
+        <button style="margin-left: 50%;padding: 5px 5px" onclick="document.getElementById('paramsDiv').style.display='none'">关闭</button>
+    </div>
+    <div>
+        <pre id="jsonPre">
+
+        </pre>
+    </div>
+	</body>
+</html>

@@ -1,13 +1,309 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<title>just test</title>
-	<link href=/static/css/login.css rel=stylesheet>
-	<script src=/static/js/login.js></script>
-</head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+		<script src="static/js/jquery.js"></script>
+	<style  type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		.headPage{
+			background-color: deepskyblue;
+			height: 70px;
+			line-height: 70px;
+			text-align: center;
+			color: honeydew;
+		}
+		.pangMain{
+			margin-top: 20px;
+			text-align: center;
+		}
+		.addProject{
+			float: right;
+			margin-right: 100px;
+			border: none;
+			background-color: orange;
+			color: honeydew;
+			line-height: 1.5em;
+		}
+		.addProject:hover{
+			font-size: 1.1em;
+			color: beige;
+		}
+		.addprojectFrom{
+			position: absolute;
+			top: 200px;
+			display: none;
+			width: 35%;
+			margin-left: 30%;
+			border: solid 1px deepskyblue;;
+			background-color: gainsboro;
+			text-align: center;
 
+		}
+		.addprojectFrom form{
+			padding-top: 50px;
+			padding-bottom: 50px;
+			margin-left:35%;
+			width: 100%;
+			margin-bottom: 10px;
+		}
+		.addprojectFrom form input{
+			height: 20px;
+			margin-top: 10px;
+		}
+		.addprojectFrom div{
+			margin-top: -2em;
+			margin-bottom: 2em;
+		}
+		.projectListDiv{
+			margin-top: 50px;
+		}
+		.projectListDiv table{
+			background-color: gainsboro;
+			line-height: 3em;
+			margin: 0 auto;
+			border: solid 1px orange;
+		}
+		.projectBranchs{
+			display: none;
+			background-color: beige;
+			width: 60%;
+			margin-left: 20%;
+			text-align: center;
+			min-height: 200px;
+			position: absolute;
+			top: 100px;
+		}
+		.projectBranchs ul li{
+			list-style: none;
+			margin-top: 10px;
+		}
+		.projectBranchs button{
+			margin-top: 20px;
+			font-size: 1.5em;
+		}
+		.classList{
+			display: none;
+			min-height: 200px;
+			background-color: honeydew;
+			text-align: center;
+			margin-top: 20px;
+		}
+		.classList table{
+			margin: 20px auto;
+
+		}
+	</style>
+
+	<script>
+		window.onload= function () {
+			var p = $("#projectList")
+            getProjectList();
+			var cancelButton = document.getElementById("addProjectCancel");
+            cancelButton.onclick = function () {
+                var div = document.getElementById("addprojectFrom");
+                div.style.display = "none";
+			}
+			var addProjectButton = document.getElementById("addProjectConfirm");
+            addProjectButton.onclick= function () {
+                   var addprojecrCode = $("#addProjectCode").val();
+                   var addprojecrName = $("#addProjectName").val();
+                   var addprojecrUrl = $("#addProjecturl").val();
+                   console.log(addprojecrCode);
+                   console.log(addprojecrName);
+                   console.log(addprojecrUrl);
+                $.ajax({
+                    type : "GET", //提交方式
+					dataType : "JSON",
+                    url : "/project/save",//路径
+                    data : {code:addprojecrCode,name:addprojecrName,uri:addprojecrUrl},
+                    success : function(result) {
+
+                    }
+                });
+                location.reload();
+			}
+        }
+
+        function getProjectList() {
+            $.ajax({
+                type : "GET", //提交方式
+                url : "/project/list",//路径
+                data : {},
+                success : function(result) {
+                		var data = result.data;
+//                     	alert(data.length);
+						var listTable = document.getElementById("projectListTable");
+						
+						for(var i = 0 ; i<data.length;i++){
+                            listTable.innerHTML+="<tr><td>"+data[i].code+"</td><td>"+data[i].name+"</td><td>"+data[i].uri+"</td><td>"+data[i].createTime+"</td><td><a href ='javascript:;' onclick = \"delectProject('"+data[i].code+"')\">删除</a>|<a href ='javascript:;' onclick = \"getProjectBranchs('"+data[i].code+"')\"> 查看分支</a></td>"
+						}
+                }
+            });
+        }
+//		添加项目
+        function  saveProjectShow() {
+		    var div = document.getElementById("addprojectFrom");
+            div.style.display = "block";
+        }
+        function  delectProject(code) {
+		    var isDelete = confirm("是否删除这个项目");
+		    if(isDelete){
+                $.ajax({
+                    dataType : "JSON",
+                    type : "GET", //提交方式
+                    url : "/project/delete",//路径
+                    data : {code:code},
+                    success : function(result) {
+                    }
+                });
+                location.reload();
+			}
+
+        }
+        function getProjectBranchs(code) {
+            $.ajax({
+                dataType : "JSON",
+                type : "GET", //提交方式
+                url : "/project/branchs",//路径
+                data : {code:code},
+                success : function(result) {
+                    if(result.code != 1){
+						alert(result.message);
+					}else{
+                        var data = result.data;
+						var ul = document.getElementById("projectBranchsUl");
+                        ul.innerHTML = "";
+						for(var i = 0 ;i<data.length;i++){
+                            ul.innerHTML += "<li><a href='javascript:;' onclick=\"getClassList('"+code+"','"+data[i]+"')\">"+data[i]+"</a>====<a  href='javascript:;' onclick=\"refreshCode('"+code+"','"+data[i]+"')\">刷新代码</a></li>";
+						}
+                        var projectBranchsDiv = document.getElementById("projectBranchs");
+                        projectBranchsDiv.style.display = "block";
+					}
+                }
+            });
+        }
+        function colseBranchsDiv() {
+            var projectBranchsDiv = document.getElementById("projectBranchs");
+            projectBranchsDiv.style.display = "none";
+        }
+        
+        function refreshCode(code,branchs) {
+            $.ajax({
+                dataType : "JSON",
+                type : "GET", //提交方式
+                url : "/api/refresh",//路径
+                data : {code:code,branch:branchs},
+                success : function(result) {
+
+       			 }
+            });
+        }
+        
+        function getClassList(code,branchs) {
+            colseBranchsDiv();
+            $("#classListTitle").text(code+"-"+branchs+"分支类列表");
+            var classListDiv = document.getElementById("classListDiv");
+            classListDiv.style.display = "block";
+            $.ajax({
+                dataType : "JSON",
+                type : "GET", //提交方式
+                url : "/api/classList",//路径
+                data : {code:code,branch:branchs},
+                success : function(result) {
+					if(result.code==1){
+					    var classListTable = document.getElementById("classListTble");
+					    var data = result.data;
+                        classListTable.innerHTML = "<tr><th>className</th>";
+						for(var i = 0 ;i<data.length;i++){
+                            classListTable.innerHTML+="<tr><th><a href='javascript:;' onclick=\"getClassDoc('"+data[i].className+"','"+data[i].code+"','"+data[i].branch+"')\">"+data[i].className+"</a></th>";
+						}
+					}else{
+					    alert(result.message);
+					}
+                }
+            });
+        }
+        
+        function getClassDoc(className,code,branch) {
+		    open("doc.html?className="+className+"&code="+code+"&branch="+branch);
+        }
+	</script>
+</head>
 <body>
-	this is test html
+	<!--页头-->
+	<div class="headPage">API文档管理
+	</div>
+
+	<!--仓库列表-->
+	<div class="pangMain">
+		<P id="projectList">项目列表</P>
+		<button class="addProject" id="addProject" onclick="saveProjectShow()">添加项目</button>
+		<div class="projectListDiv">
+			<table cellspacing = "40px" id="projectListTable">
+				<tr>
+					<th>code</th>
+					<th>name</th>
+					<th>url</th>
+					<th>createTime</th>
+					<th>操作</th>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="addprojectFrom" id="addprojectFrom">
+		<form>
+			<table>
+				<tr>
+					<td>
+						code:
+					</td>
+					<td>
+						<input placeholder="请输入项目code" id="addProjectCode" />
+					</td>
+				</tr>
+				<tr>
+					<td>
+						name:
+					</td>
+					<td>
+						<input placeholder="请输入项目name" id="addProjectName"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						url:
+					</td>
+					<td>
+						<input placeholder="请输入项目地址" id="addProjecturl"/>
+					</td>
+				</tr>
+
+			</table>
+		</form>
+		<div>
+			<button id="addProjectConfirm">确定</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<button id="addProjectCancel">取消</button>
+		</div>
+
+	</div>
+   <!--分支信息顯示框-->
+    <div class="projectBranchs" id="projectBranchs" >
+		<ul id="projectBranchsUl">
+		</ul>
+		<button onclick="colseBranchsDiv()">关闭</button>
+	</div>
+	<!--分支类信息-->
+	<div class="classList" id="classListDiv">
+		<p id="classListTitle">
+		</p>
+		<table cellspacing = "40px" id="classListTble">
+
+		</table>
+	</div>
 </body>
 
 </html>
